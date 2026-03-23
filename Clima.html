@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="./manifest.json">
+<link href="service-worker.js" rel="script">
+<title>Shopee Clima</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #f7f7f7;
+    --card:   #ffffff;
+    --border: #eeeeee;
+    --text:   #111111;
+    --sub:    #999999;
+    --pill:   #f5f5f5;
+    --pill-t: #555555;
+    --input:  #ffffff;
+    --shadow: rgba(0,0,0,.06);
+  }
+
+  [data-theme="dark"] {
+    --bg:     #0f0f0f;
+    --card:   #1a1a1a;
+    --border: #242424;
+    --text:   #f0ebe5;
+    --sub:    #666666;
+    --pill:   #242424;
+    --pill-t: #aaaaaa;
+    --input:  #1a1a1a;
+    --shadow: rgba(0,0,0,.4);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    transition: background .25s, color .25s;
+  }
+
+  .wrap {
+    max-width: 390px;
+    margin: 0 auto;
+    padding: 20px 16px 48px;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .logo-sq {
+    width: 28px; height: 28px;
+    background: #EE4D2D;
+    border-radius: 6px;
+    display: grid; place-items: center;
+    font-size: 14px;
+  }
+
+  .header-actions { display: flex; align-items: center; gap: 8px; }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    display: grid; place-items: center;
+    cursor: pointer;
+    font-size: 15px;
+    transition: background .25s, border-color .2s;
+    flex-shrink: 0;
+  }
+  .icon-btn:hover { border-color: #EE4D2D; }
+
+  /* ── Search bar ── */
+  .search-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .search-wrap {
+    flex: 1;
+    position: relative;
+  }
+
+  .search-wrap .search-icon {
+    position: absolute;
+    left: 11px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px 12px 10px 34px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--input);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .2s, background .25s;
+  }
+  .search-input::placeholder { color: var(--sub); }
+  .search-input:focus { border-color: #EE4D2D; }
+
+  .search-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    background: #EE4D2D;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background .2s;
+    white-space: nowrap;
+  }
+  .search-btn:hover { background: #d94424; }
+
+  .loc-btn {
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sub);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color .2s, color .2s, background .25s;
+    white-space: nowrap;
+  }
+  .loc-btn:hover { border-color: #EE4D2D; color: #EE4D2D; }
+
+  /* ── Weather block ── */
+  .weather-block {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 22px;
+    margin-bottom: 12px;
+    transition: background .25s;
+  }
+
+  .city-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .city-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .city-time { font-size: 12px; color: var(--sub); font-variant-numeric: tabular-nums; }
+
+  .temp-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .temp {
+    font-size: 64px;
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 1;
+    color: var(--text);
+  }
+
+  .temp sup { font-size: 24px; font-weight: 400; color: var(--sub); letter-spacing: 0; }
+
+  .w-icon { font-size: 56px; }
+
+  .w-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .w-pill {
+    font-size: 12px;
+    color: var(--pill-t);
+    background: var(--pill);
+    border-radius: 20px;
+    padding: 4px 10px;
+    transition: background .25s, color .25s;
+  }
+
+  /* ── Clock strip ── */
+  .clock-strip {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background .25s;
+  }
+
+  .clock-left { display: flex; flex-direction: column; gap: 2px; }
+  .clock-time { font-size: 28px; font-weight: 700; letter-spacing: -1px; color: var(--text); font-variant-numeric: tabular-nums; }
+  .clock-date { font-size: 11px; color: var(--sub); }
+  .clock-icon { font-size: 28px; }
+
+  /* ── Forecast ── */
+  .forecast {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin-bottom: 20px;
+  }
+  .forecast::-webkit-scrollbar { display: none; }
+
+  .fday {
+    flex: 0 0 auto;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 10px 12px;
+    text-align: center;
+    min-width: 62px;
+    font-size: 12px;
+    transition: background .25s;
+  }
+  .fday.today { outline: 1.5px solid #EE4D2D; }
+  .fd-name { color: var(--sub); margin-bottom: 4px; font-size: 11px; }
+  .fd-icon { font-size: 18px; margin: 2px 0; }
+  .fd-temp { font-weight: 600; color: var(--text); }
+  .fd-rain { font-size: 10px; color: #64B5F6; margin-top: 2px; }
+
+  /* ── Outfits ── */
+  .section-label {
+    font-size: 13px; font-weight: 600;
+    color: var(--text); margin-bottom: 10px;
+  }
+
+  .outfit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+
+  .outfit-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--card);
+    border-radius: 12px;
+    padding: 12px 14px;
+    text-decoration: none;
+    color: inherit;
+    transition: box-shadow .15s, background .25s;
+  }
+  .outfit-row:hover { box-shadow: 0 2px 12px var(--shadow); }
+
+  .outfit-em { font-size: 28px; min-width: 36px; text-align: center; }
+  .outfit-text { flex: 1; }
+  .outfit-name { font-size: 13px; font-weight: 600; margin-bottom: 1px; color: var(--text); }
+  .outfit-why  { font-size: 11px; color: var(--sub); }
+  .outfit-arr  { font-size: 14px; color: var(--sub); transition: color .15s; }
+  .outfit-row:hover .outfit-arr { color: #EE4D2D; }
+
+  /* ── CTA ── */
+  .cta {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; padding: 15px;
+    background: #EE4D2D; color: #fff;
+    font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+    border: none; border-radius: 12px; cursor: pointer;
+    text-decoration: none; transition: background .2s;
+  }
+  .cta:hover { background: #d94424; }
+
+  /* ── States ── */
+  .state { text-align: center; padding: 60px 10px; }
+  .state-icon  { font-size: 44px; margin-bottom: 12px; }
+  .state-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+  .state-sub   { font-size: 13px; color: var(--sub); margin-bottom: 20px; line-height: 1.6; }
+
+  .btn-red {
+    font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600;
+    background: #EE4D2D; color: #fff; border: none; border-radius: 10px;
+    padding: 11px 20px; cursor: pointer; transition: background .2s;
+  }
+  .btn-red:hover { background: #d94424; }
+
+  .btn-link {
+    display: block; font-family: 'Inter', sans-serif; font-size: 12px;
+    color: var(--sub); background: none; border: none; cursor: pointer;
+    margin-top: 12px; text-decoration: underline; transition: color .2s;
+  }
+  .btn-link:hover { color: var(--text); }
+
+  .spinner {
+    width: 28px; height: 28px;
+    border: 2.5px solid var(--border); border-top-color: #EE4D2D;
+    border-radius: 50%; margin: 0 auto 14px;
+    animation: spin .7s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-sq">🛍️</div>
+      Shopee <span style="color:#EE4D2D">Clima</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="theme-btn" onclick="toggleTheme()" title="Alternar tema">🌙</button>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-row">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        class="search-input"
+        id="search-input"
+        type="text"
+        placeholder="Buscar cidade... ex: São Paulo"
+        onkeydown="if(event.key==='Enter') searchCity()"
+      />
+    </div>
+    <button class="search-btn" onclick="searchCity()">Buscar</button>
+    <button class="loc-btn" onclick="requestLocation()" title="Usar minha localização">📍</button>
+  </div>
+
+  <div id="app"></div>
+
+</div>
+
+<script>
+/* ── Tema ── */
+const savedTheme = localStorage.getItem('theme') || 'light';
+setTheme(savedTheme);
+
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = t === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+}
+
+/* ── Relógio ao vivo ── */
+let clockInterval = null;
+let currentTZ = null; // IANA timezone string from wttr
+
+function startClock(timezone) {
+  currentTZ = timezone || null;
+  if (clockInterval) clearInterval(clockInterval);
+  updateClock();
+  clockInterval = setInterval(updateClock, 1000);
+}
+
+function updateClock() {
+  const el = document.getElementById('live-clock');
+  if (!el) { clearInterval(clockInterval); return; }
+
+  const now = currentTZ
+    ? new Date(new Date().toLocaleString('en-US', { timeZone: currentTZ }))
+    : new Date();
+
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
+
+  const days = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  const dayStr = `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]}`;
+
+  el.innerHTML = `
+    <div class="clock-left">
+      <div class="clock-time">${hh}:${mm}<span style="font-size:16px;font-weight:400;color:var(--sub)">:${ss}</span></div>
+      <div class="clock-date">${dayStr}</div>
+    </div>
+    <div class="clock-icon">🕐</div>
+  `;
+}
+
+/* ── Dados ── */
+const ICONS = {
+  storm:'⛈️', rain:'🌧️', cloudy:'☁️', partly:'⛅', sunny:'☀️', cold:'🥶'
+};
+
+const OUTFITS = {
+  hot:   [
+    { em:'👕', name:'Camiseta leve',          why:'Respirável para o calor',       q:'camiseta dry fit' },
+    { em:'🩳', name:'Short ou bermuda',        why:'Leveza total no verão',         q:'bermuda verão' },
+    { em:'👗', name:'Vestido fresco',          why:'Feminino e confortável',        q:'vestido feminino verão' },
+    { em:'🕶️', name:'Óculos + boné',           why:'Proteção e estilo',             q:'óculos sol boné' },
+  ],
+  warm:  [
+    { em:'👔', name:'Camisa manga curta',      why:'Versátil para o calor ameno',   q:'camisa manga curta' },
+    { em:'👖', name:'Calça chino',             why:'Conforto com estilo',           q:'calça chino' },
+    { em:'👗', name:'Vestido midi',            why:'Elegante e leve',               q:'vestido midi feminino' },
+    { em:'🕶️', name:'Óculos de sol',           why:'O toque final do look',         q:'óculos de sol' },
+  ],
+  mild:  [
+    { em:'🧥', name:'Jaqueta leve',            why:'Para temperatura variável',     q:'jaqueta leve' },
+    { em:'👕', name:'Look em camadas',          why:'Camiseta + sobreposição',       q:'camisa flanela' },
+    { em:'👟', name:'Tênis casual',             why:'Conforto para o dia todo',      q:'tênis casual' },
+    { em:'🧣', name:'Cachecol',                why:'Charme e funcionalidade',       q:'cachecol lenço' },
+  ],
+  cool:  [
+    { em:'🧥', name:'Casaco ou moletom',       why:'Necessário para o frio',        q:'casaco frio' },
+    { em:'👖', name:'Calça jeans ou moletom',  why:'Quentinho e estiloso',          q:'calça moletom' },
+    { em:'🥾', name:'Bota ou coturno',         why:'Protege e complementa',         q:'bota coturno' },
+    { em:'🧤', name:'Luva e gorro',            why:'Essenciais no frio',            q:'luva gorro' },
+  ],
+  rainy: [
+    { em:'🧥', name:'Capa de chuva',           why:'Imprescindível no dia chuvoso', q:'capa de chuva' },
+    { em:'👢', name:'Bota impermeável',         why:'Pés secos o dia todo',         q:'bota impermeável' },
+    { em:'☂️', name:'Guarda-chuva',             why:'Cabe na bolsa, salva o dia',   q:'guarda chuva compacto' },
+    { em:'🧶', name:'Blusa de tricô',           why:'Quentinha por baixo',          q:'blusa lã tricô' },
+  ],
+};
+
+function condKey(temp, c) {
+  if (c.match(/storm|thunder/)) return 'storm';
+  if (c.match(/rain|drizzle|shower/)) return 'rain';
+  if (c.includes('overcast') || (c.includes('cloud') && !c.includes('partly'))) return 'cloudy';
+  if (c.match(/partly|few cloud/)) return 'partly';
+  if (temp <= 13) return 'cold';
+  return temp >= 28 ? 'sunny' : 'partly';
+}
+
+function outfitType(temp, c) {
+  if (c.match(/rain|drizzle|storm|shower/)) return 'rainy';
+  if (temp >= 29) return 'hot';
+  if (temp >= 22) return 'warm';
+  if (temp >= 16) return 'mild';
+  return 'cool';
+}
+
+function dayName(str, i) {
+  if (i === 0) return 'Hoje';
+  if (i === 1) return 'Amanhã';
+  return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][new Date(str+'T12:00:00').getDay()];
+}
+
+function dayIcon(d) {
+  const p = d.rain||0, t = d.max||25;
+  if (p>60) return '🌧️';
+  if (p>30) return '🌦️';
+  if (t>=28) return '☀️';
+  if (t>=22) return '⛅';
+  return '☁️';
+}
+
+function shopee(q) {
+  return `https://shopee.com.br/search?keyword=${encodeURIComponent(q)}`;
+}
+
+function render({ city, temp, cond, max, rain, days, timezone }) {
+  const cl = cond.toLowerCase();
+  const icon = ICONS[condKey(temp, cl)];
+  const outfits = OUTFITS[outfitType(temp, cl)];
+
+  document.getElementById('app').innerHTML = `
+    <div class="weather-block">
+      <div class="city-row">
+        <div class="city-name">📍 ${city}</div>
+        <div class="city-time" id="header-time"></div>
+      </div>
+      <div class="temp-row">
+        <div class="temp">${Math.round(temp)}<sup>°C</sup></div>
+        <div class="w-icon">${icon}</div>
+      </div>
+      <div class="w-meta">
+        <span class="w-pill">${cond}</span>
+        <span class="w-pill">Máx. ${Math.round(max)}°</span>
+        ${rain > 0 ? `<span class="w-pill">💧 ${rain}%</span>` : ''}
+      </div>
+    </div>
+
+    <div class="clock-strip" id="live-clock"></div>
+
+    <div class="forecast">
+      ${days.slice(0,5).map((d,i) => `
+        <div class="fday ${i===0?'today':''}">
+          <div class="fd-name">${dayName(d.date,i)}</div>
+          <div class="fd-icon">${dayIcon(d)}</div>
+          <div class="fd-temp">${Math.round(d.max)}°</div>
+          ${d.rain>0 ? `<div class="fd-rain">💧${d.rain}%</div>` : ''}
+        </div>`).join('')}
+    </div>
+
+    <div class="section-label">O que vestir hoje</div>
+
+    <div class="outfit-list">
+      ${outfits.map(o => `
+        <a class="outfit-row" href="${shopee(o.q)}" target="_blank" rel="noopener">
+          <div class="outfit-em">${o.em}</div>
+          <div class="outfit-text">
+            <div class="outfit-name">${o.name}</div>
+            <div class="outfit-why">${o.why}</div>
+          </div>
+          <div class="outfit-arr">›</div>
+        </a>`).join('')}
+    </div>
+
+    <a class="cta" href="${shopee(outfits[0].q)}" target="_blank" rel="noopener">
+      🛍️ Ver na Shopee
+    </a>
+  `;
+
+  startClock(timezone);
+}
+
+/* ── Estados ── */
+function showLoading(msg) {
+  if (clockInterval) clearInterval(clockInterval);
+  document.getElementById('app').innerHTML = `
+    <div class="state">
+      <div class="spinner"></div>
+      <div class="state-sub">${msg}</div>
+    </div>`;
+}
+
+function showPermission() {
+  document.getElementById('app').innerHTML = `
+    <div class="state">
+      <div class="state-icon">📍</div>
+      <div class="state-title">Precisamos da sua localização</div>
+      <div class="state-sub">Para mostrar o clima correto e os melhores looks do dia.</div>
+      <button class="btn-red" onclick="requestLocation()">Permitir localização</button>
+      <button class="btn-link" onclick="loadFallback()">Usar localização padrão</button>
+    </div>`;
+}
+
+function showError(msg) {
+  document.getElementById('app').innerHTML = `
+    <div class="state">
+      <div class="state-icon">⚠️</div>
+      <div class="state-title">Algo deu errado</div>
+      <div class="state-sub">${msg}</div>
+      <button class="btn-red" onclick="requestLocation()">Tentar novamente</button>
+      <button class="btn-link" onclick="loadFallback()">Usar localização padrão</button>
+    </div>`;
+}
+
+/* ── Fetch ── */
+async function fetchWeather(query) {
+  showLoading('Buscando clima...');
+  try {
+    const encoded = encodeURIComponent(query);
+    const res = await fetch(`https://wttr.in/${encoded}?format=j1`);
+    if (!res.ok) throw new Error();
+    const d = await res.json();
+
+    const cur  = d.current_condition?.[0];
+    const area = d.nearest_area?.[0];
+    const city = [area?.areaName?.[0]?.value, area?.region?.[0]?.value, area?.country?.[0]?.value]
+      .filter(Boolean).join(', ') || 'Sua cidade';
+    const temp = parseInt(cur?.temp_C ?? 22);
+    const cond = cur?.weatherDesc?.[0]?.value || 'Parcialmente nublado';
+    const timezone = d.timezone || null;
+    const days  = (d.weather||[]).map(w => ({
+      date: w.date,
+      max:  parseInt(w.maxtempC),
+      rain: parseInt(w.hourly?.[4]?.chanceofrain ?? 0),
+    }));
+
+    render({ city, temp, cond, max: days[0]?.max ?? temp, rain: days[0]?.rain ?? 0, days, timezone });
+  } catch {
+    showError('Cidade não encontrada. Tente outro nome.');
+  }
+}
+
+/* ── Ações ── */
+function searchCity() {
+  const val = document.getElementById('search-input').value.trim();
+  if (!val) return;
+  fetchWeather(val);
+}
+
+function requestLocation() {
+  if (!navigator.geolocation) { loadFallback(); return; }
+  showLoading('Obtendo localização...');
+  navigator.geolocation.getCurrentPosition(
+    p => fetchWeather(`${p.coords.latitude},${p.coords.longitude}`),
+    e => e.code === 1 ? showPermission() : showError('Não foi possível obter sua localização.'),
+    { timeout: 8000, maximumAge: 60000 }
+  );
+}
+
+function loadFallback() { fetchWeather('Osasco,SP,Brazil'); }
+
+requestLocation();
+</script>
+</body>
+</html>
